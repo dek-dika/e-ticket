@@ -282,36 +282,6 @@
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>Exclude</legend>
-            <div class="checkbox-grid">
-                @php $exclude = $transaksi->exclude; @endphp
-                <label>
-                    <input type="checkbox" {{ $exclude?->bensin ? 'checked' : '' }}>
-                    Bensin
-                </label>
-                <label>
-                    <input type="checkbox" {{ $exclude?->parkir ? 'checked' : '' }}>
-                    Parkir
-                </label>
-                <label>
-                    <input type="checkbox" {{ $exclude?->sopir ? 'checked' : '' }}>
-                    Supir
-                </label>
-                <label>
-                    <input type="checkbox" {{ $exclude?->makan_siang ? 'checked' : '' }}>
-                    Makan Siang
-                </label>
-                <label>
-                    <input type="checkbox" {{ $exclude?->makan_malam ? 'checked' : '' }}>
-                    Makan Malam
-                </label>
-                <label>
-                    <input type="checkbox" {{ $exclude?->tiket_masuk ? 'checked' : '' }}>
-                    Tiket Masuk
-                </label>
-            </div>
-        </fieldset>
 
         <table style="width: 100%; margin-top: 50px; text-align: center;">
             <tr>
