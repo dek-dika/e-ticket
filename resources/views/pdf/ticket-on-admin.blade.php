@@ -156,12 +156,12 @@
             $data = file_get_contents($path);
             $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
 
-            // Hitung total + additional_charge dan balance
+            // Ambil data transaksi dari ketersediaan
             $transaksi = $ketersediaan->transaksi;
             $totalRaw = $transaksi->total_transaksi ?? 0;
             $additional = $transaksi->additional_charge ?? 0;
             $deposit = $transaksi->deposit ?? 0;
-            $totalWithAdd = $totalRaw + $additional;
+            $totalWithAdd = $totalRaw;
             $balance = max($totalWithAdd - $deposit, 0);
         @endphp
 
@@ -181,13 +181,13 @@
                 <td>
                     Name:
                     <span class="field w-350">
-                        {{ $ketersediaan->transaksi->pemesanan->pelanggan->nama_pemesan ?? '-' }}
+                        {{ $transaksi->pemesanan->pelanggan->nama_pemesan ?? '-' }}
                     </span>
                 </td>
                 <td>
                     Phone No.:
                     <span class="field w-200">
-                        {{ $ketersediaan->transaksi->pemesanan->pelanggan->nomor_whatsaap ?? '-' }}
+                        {{ $transaksi->pemesanan->pelanggan->nomor_whatsaap ?? '-' }}
                     </span>
                 </td>
             </tr>
@@ -201,7 +201,8 @@
                 <td>
                     Provider:
                     <span class="field w-300">
-                        {{ optional($transaksi->pemesanan->mobil->sopir)->nama_sopir ?? '-' }}
+                        {{ $transaksi->pemesanan->mobil->nama_kendaraan ?? '-' }} /
+                        {{ $transaksi->pemesanan->mobil->sopir->nama_sopir ?? '-' }}
                     </span>
                 </td>
             </tr>
@@ -259,7 +260,17 @@
             <tr>
                 <td colspan="2">
                     Other:
-                    <span class="field w-700"></span>
+                    <span class="field w-700">
+                        {{ $transaksi->paketWisata->tempat ?? '-' }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    Note:
+                    <span class="field w-700">
+                        {{ $transaksi->note ?? '-' }}
+                    </span>
                 </td>
             </tr>
         </table>
@@ -290,37 +301,6 @@
                 </label>
                 <label>
                     <input type="checkbox" {{ $includeData?->tiket_masuk ? 'checked' : '' }}>
-                    Tiket Masuk
-                </label>
-            </div>
-        </fieldset>
-
-        <fieldset>
-            <legend>Exclude</legend>
-            <div class="checkbox-grid">
-                @php $excludeData = $ketersediaan->exclude; @endphp
-                <label>
-                    <input type="checkbox" {{ $excludeData?->bensin ? 'checked' : '' }}>
-                    Bensin
-                </label>
-                <label>
-                    <input type="checkbox" {{ $excludeData?->parkir ? 'checked' : '' }}>
-                    Parkir
-                </label>
-                <label>
-                    <input type="checkbox" {{ $excludeData?->sopir ? 'checked' : '' }}>
-                    Supir
-                </label>
-                <label>
-                    <input type="checkbox" {{ $excludeData?->makan_siang ? 'checked' : '' }}>
-                    Makan Siang
-                </label>
-                <label>
-                    <input type="checkbox" {{ $excludeData?->makan_malam ? 'checked' : '' }}>
-                    Makan Malam
-                </label>
-                <label>
-                    <input type="checkbox" {{ $excludeData?->tiket_masuk ? 'checked' : '' }}>
                     Tiket Masuk
                 </label>
             </div>
