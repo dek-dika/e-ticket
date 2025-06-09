@@ -10,6 +10,7 @@ use App\Models\PaketWisata;
 use App\Models\Transaksi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PemesananController extends Controller
 {
@@ -28,65 +29,101 @@ class PemesananController extends Controller
 
     public function store(Request $request)
     {
-
-
-        // validasi input
-        $data = $request->validate([
+        // Validasi input dasar
+        $request->validate([
             'paket_id'         => 'required|integer|exists:paket_wisatas,paketwisata_id',
-        'tanggal' => 'required|date_format:Y-m-d',
-
-            'mobil_id'         => 'required|integer|exists:mobils,mobil_id',
-            'harga'            => 'required|numeric',
-            'jumlah_peserta'   => 'required|integer|min:1',
+            'tanggal'          => 'required|date_format:Y-m-d',
+            'jam_mulai'        => 'required|string|max:20',
             'nama_pemesan'     => 'required|string|max:255',
             'email'            => 'required|email|max:255',
             'alamat'           => 'required|string|max:500',
             'nomor_whatsapp'   => 'required|string|max:20',
-            'jam_mulai'   => 'required|string|max:20',
+            'mobil_ids'        => 'required|array|min:1',
+            'mobil_ids.*'      => 'required|integer|exists:mobils,mobil_id',
+            'jumlah_peserta'   => 'required|array|min:1',
+            'jumlah_peserta.*' => 'required|integer|min:1',
         ]);
 
-        // 1) Cek/membuat Pelanggan
-        $pelanggan = Pelanggan::firstOrCreate(
-            ['email' => $data['email']],
-            [
-                'nama_pemesan'   => $data['nama_pemesan'],
-                'alamat'         => $data['alamat'],
-                'nomor_whatsaap' => $data['nomor_whatsapp'],
-            ]
-        );
+        // Pastikan jumlah mobil dan peserta sama
+        if (count($request->mobil_ids) !== count($request->jumlah_peserta)) {
+            return back()->withErrors(['error' => 'Data mobil dan jumlah peserta tidak sesuai']);
+        }
 
-        // 2) Buat Pemesanan
-        $pemesanan = Pemesanan::create([
-            'pemesan_id'             => $pelanggan->pelanggan_id,
-            'paketwisata_id'         => $data['paket_id'],
-            'mobil_id'               => $data['mobil_id'],
-            'tanggal_keberangkatan'  => $data['tanggal'],
-            'jam_mulai'              =>  $data['jam_mulai'],
-        ]);
+        DB::beginTransaction();
 
+        try {
+            // 1) Cek/membuat Pelanggan
+            $pelanggan = Pelanggan::firstOrCreate(
+                ['email' => $request->email],
+                [
+                    'nama_pemesan'   => $request->nama_pemesan,
+                    'alamat'         => $request->alamat,
+                    'nomor_whatsaap' => $request->nomor_whatsapp,
+                ]
+            );
 
+            $paketWisata     = PaketWisata::findOrFail($request->paket_id);
+            $totalPemesanan  = count($request->mobil_ids);
+            $pemesananIds    = [];
+            $totalHarga      = 0;
 
-        // 3) Buat Transaksi
-        Transaksi::create([
-            'paketwisata_id'    => $data['paket_id'],
-            'pemesan_id'        => $pelanggan->pelanggan_id,
-            'pemesanan_id'      => $pemesanan->pemesanan_id,
-            'jenis_transaksi'   => '',
-            'deposit'           => 0,
-            'balance'           => 0,
-            'jumlah_peserta'    => $data['jumlah_peserta'],
-            'owe_to_me'         => 0,              // belum ada kewajiban sopir
-            'pay_to_provider'   => 0,              // input nanti saat konfirmasi
-            'total_transaksi'   =>$data['harga'],
-            'transaksi_status'  => 'pending',
-        ]);
+            // 2) Loop untuk membuat multiple pemesanan
+            for ($i = 0; $i < $totalPemesanan; $i++) {
+                $mobilId        = $request->mobil_ids[$i];
+                $jumlahPeserta  = $request->jumlah_peserta[$i];
 
+                // Validasi kapasitas mobil
+                $mobil = Mobil::findOrFail($mobilId);
+                if ($jumlahPeserta > $mobil->jumlah_tempat_duduk) {
+                    throw new \Exception("Jumlah peserta untuk mobil {$mobil->nama_kendaraan} melebihi kapasitas");
+                }
 
+                // Buat Pemesanan
+                $pemesanan = Pemesanan::create([
+                    'pemesan_id'            => $pelanggan->pelanggan_id,
+                    'paketwisata_id'        => $request->paket_id,
+                    'mobil_id'              => $mobilId,
+                    'tanggal_keberangkatan' => $request->tanggal,
+                    'jam_mulai'             => $request->jam_mulai,
+                ]);
 
-        // 4) Redirect dengan pesan sukses
-        return redirect()
-            ->route('paket-wisata.landing')
-            ->with('success', 'Pemesanan dan Transaksi berhasil dibuat.');
+                $pemesananIds[] = $pemesanan->pemesanan_id;
+
+                // Hitung harga per pemesanan
+                $hargaPemesanan = $paketWisata->harga * $jumlahPeserta;
+                $totalHarga    += $hargaPemesanan;
+
+                // 3) Buat Transaksi untuk setiap pemesanan
+                Transaksi::create([
+                    'paketwisata_id'   => $request->paket_id,
+                    'pemesan_id'       => $pelanggan->pelanggan_id,
+                    'pemesanan_id'     => $pemesanan->pemesanan_id,
+                    'deposit'          => 0,
+                    'balance'          => 0,
+                    'jumlah_peserta'   => $jumlahPeserta,
+                    'owe_to_me'        => 0,
+                    'pay_to_provider'  => 0,
+                    'total_transaksi'  => $hargaPemesanan,
+                    'transaksi_status' => 'pending',
+                ]);
+            }
+
+            DB::commit();
+
+            // 4) Redirect dengan informasi pemesanan
+            return redirect()
+                ->route('paket-wisata.landing')
+                ->with('success', "Berhasil membuat {$totalPemesanan} pemesanan dengan total Rp " . number_format($totalHarga, 0, ',', '.'))
+                ->with('booking_info', [
+                    'total_pemesanan' => $totalPemesanan,
+                    'total_harga'     => $totalHarga,
+                    'pemesanan_ids'   => $pemesananIds,
+                ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => 'Gagal membuat pemesanan: ' . $e->getMessage()]);
+        }
     }
 
     public function show(Pemesanan $pemesanan)
@@ -107,7 +144,7 @@ class PemesananController extends Controller
         $data = $request->validate([
             'pemesan_id'            => 'required|exists:pelanggans,pelanggan_id',
             'paketwisata_id'        => 'required|exists:paket_wisatas,paketwisata_id',
-            'mobil_id'          => 'required',
+            'mobil_id'              => 'required',
             'jam_mulai'             => 'required|date_format:H:i',
             'tanggal_keberangkatan' => 'required|date',
         ]);
