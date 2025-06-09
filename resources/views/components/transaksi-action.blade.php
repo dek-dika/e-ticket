@@ -155,6 +155,17 @@
                             </div>
                         </fieldset>
 
+                        {{-- NOTE (NEW FIELD) --}}
+                        <div class="md:col-span-2">
+                            <label for="note_{{ $rowId }}"
+                                class="block text-gray-700 dark:text-gray-300 font-medium mb-1">
+                                Note
+                            </label>
+                            <textarea id="note_{{ $rowId }}" name="note" rows="3"
+                                class="w-full border-gray-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm p-2"
+                                placeholder="Tulis catatan di sini..."></textarea>
+                        </div>
+
                     </div>
 
                     {{-- FOOTER --}}
