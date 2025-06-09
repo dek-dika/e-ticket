@@ -160,7 +160,7 @@
             $totalRaw = $transaksi->total_transaksi ?? 0;
             $additional = $transaksi->additional_charge ?? 0;
             $deposit = $transaksi->deposit ?? 0;
-            $totalWithAdd = $totalRaw + $additional;
+            $totalWithAdd = $totalRaw;
             $balance = max($totalWithAdd - $deposit, 0);
         @endphp
 
@@ -196,6 +196,7 @@
                 </td>
                 <td>Provider:
                     <span class="field w-300">
+                        {{ $transaksi->pemesanan->mobil->nama_kendaraan ?? '-' }} /
                         {{ $transaksi->pemesanan->mobil->sopir->nama_sopir ?? '-' }}
                     </span>
                 </td>
@@ -246,7 +247,16 @@
             </tr>
             <tr>
                 <td colspan="2">Other:
-                    <span class="field w-700"></span>
+                    <span class="field w-700">
+                        {{ $transaksi->paketWisata->tempat ?? '-' }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">Note:
+                    <span class="field w-700">
+                        {{ $transaksi->note ?? '-' }}
+                    </span>
                 </td>
             </tr>
         </table>
@@ -281,7 +291,6 @@
                 </label>
             </div>
         </fieldset>
-
 
         <table style="width: 100%; margin-top: 50px; text-align: center;">
             <tr>
