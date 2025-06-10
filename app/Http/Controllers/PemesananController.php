@@ -29,7 +29,24 @@ class PemesananController extends Controller
 
     public function store(Request $request)
     {
-        dd($request->all());
+       
+        $validator = \Validator::make($request->all(), [
+    'paket_id'         => 'required|integer|exists:paket_wisatas,paketwisata_id',
+    'tanggal'          => 'required|date_format:Y-m-d',
+    'jam_mulai'        => 'required|string|max:20',
+    'nama_pemesan'     => 'required|string|max:255',
+    'email'            => 'required|email|max:255',
+    'alamat'           => 'required|string|max:500',
+    'nomor_whatsapp'   => 'required|string|max:20',
+    'mobil_ids'        => 'required|array|min:1',
+    'mobil_ids.*'      => 'required|integer|exists:mobils,mobil_id',
+    'jumlah_peserta'   => 'required|array|min:1',
+    'jumlah_peserta.*' => 'required|integer|min:1',
+]);
+
+if ($validator->fails()) {
+    dd($validator->errors());
+}
         // Validasi input dasar
         $request->validate([
             'paket_id'         => 'required|integer|exists:paket_wisatas,paketwisata_id',
