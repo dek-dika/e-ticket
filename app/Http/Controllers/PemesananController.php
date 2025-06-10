@@ -142,11 +142,11 @@ class PemesananController extends Controller
     public function update(Request $request, Pemesanan $pemesanan)
     {
         $data = $request->validate([
-            'pemesan_id'            => 'required|exists:pelanggans,pelanggan_id',
-            'paketwisata_id'        => 'required|exists:paket_wisatas,paketwisata_id',
+            'pemesan_id'            => 'required',
+            'paketwisata_id'        => 'required',
             'mobil_id'              => 'required',
-            'jam_mulai'             => 'required|date_format:H:i',
-            'tanggal_keberangkatan' => 'required|date',
+            'jam_mulai'             => 'required',
+            'tanggal_keberangkatan' => 'required',
         ]);
 
         $pemesanan->update($data);
