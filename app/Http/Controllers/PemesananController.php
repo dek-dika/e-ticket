@@ -146,7 +146,7 @@ class PemesananController extends Controller
             'paketwisata_id'        => 'required',
             'mobil_id'              => 'required',
             'jam_mulai'             => 'required',
-            'tanggal_keberangkatan' => 'required',
+            'tanggal_keberangkatan' => 'required|date',
         ]);
 
         $pemesanan->update($data);
