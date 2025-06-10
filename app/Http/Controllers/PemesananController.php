@@ -29,7 +29,7 @@ class PemesananController extends Controller
 
     public function store(Request $request)
     {
-        dd($request);
+        dd($request->all());
         // Validasi input dasar
         $request->validate([
             'paket_id'         => 'required|integer|exists:paket_wisatas,paketwisata_id',
