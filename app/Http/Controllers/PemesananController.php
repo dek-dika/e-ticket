@@ -37,7 +37,7 @@ class PemesananController extends Controller
             'nama_pemesan'     => 'required|string|max:255',
             'email'            => 'required|email|max:255',
             'alamat'           => 'required|string|max:500',
-            'nomor_whatsaap'   => 'required|string|max:20',
+            'nomor_whatsapp'   => 'required|string|max:20',
             'mobil_ids'        => 'required|array|min:1',
             'mobil_ids.*'      => 'required|integer|exists:mobils,mobil_id',
             'jumlah_peserta'   => 'required|array|min:1',
@@ -58,7 +58,7 @@ class PemesananController extends Controller
                 [
                     'nama_pemesan'   => $request->nama_pemesan,
                     'alamat'         => $request->alamat,
-                    'nomor_whatsaap' => $request->nomor_whatsapp,
+                    'nomor_whatsapp' => $request->nomor_whatsapp,
                 ]
             );
 

@@ -189,7 +189,7 @@
                 <td>
                     Phone No.:
                     <span class="field w-200">
-                        {{ $cust->nomor_whatsaap ?? '-' }}
+                        {{ $cust->nomor_whatsapp ?? '-' }}
                     </span>
                 </td>
             </tr>

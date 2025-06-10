@@ -184,7 +184,7 @@
                 </td>
                 <td>Phone No.:
                     <span class="field w-200">
-                        {{ $transaksi->pemesanan->pelanggan->nomor_whatsaap ?? '-' }}
+                        {{ $transaksi->pemesanan->pelanggan->nomor_whatsapp ?? '-' }}
                     </span>
                 </td>
             </tr>
