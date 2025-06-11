@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('paketwisata_id');
             $table->unsignedBigInteger('pemesan_id');
             $table->unsignedBigInteger('pemesanan_id');
-            $table->string('jenis_transaksi', 255);
+            $table->string('jenis_transaksi', 255)->nullable();
             $table->string('deposit', 255)->nullable();
             $table->string('balance', 255);
             $table->integer('jumlah_peserta')->unsigned();

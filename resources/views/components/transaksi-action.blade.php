@@ -75,7 +75,7 @@
                                 Deposit
                             </label>
                             <input id="deposit_{{ $rowId }}" name="deposit" type="number" step="1"
-                                required placeholder="500000"
+                                required placeholder="0"
                                 class="w-full border-gray-300 focus:ring-green-500 focus:border-green-500 rounded-md shadow-sm p-2"
                                 data-harga="{{ $hargaPaket }}" oninput="updateOweToMe('{{ $rowId }}')">
                         </div>

@@ -75,6 +75,7 @@ class PemesananTable extends DataTableComponent
             Column::make('Actions')
                 ->label(fn($row) => view('components.table-action', [
                     'rowId'     => $row->pemesanan_id,
+                    'editUrl'   => route('pemesanan.edit', $row->pemesanan_id),
                     'deleteUrl' => route('pemesanan.destroy', $row->pemesanan_id),
                 ])->render())
                 ->html(),
