@@ -11,7 +11,6 @@ class TransaksiTable extends DataTableComponent
 {
     protected $model = Transaksi::class;
 
-    // agar bisa refresh setelah update
     protected $listeners = [
         'refreshTable' => '$refresh',
     ];
@@ -31,15 +30,13 @@ class TransaksiTable extends DataTableComponent
     {
         return [
             Column::make('Actions')
-                ->label(
-                    fn($row) => view('components.transaksi-action', [
-                        'rowId'            => $row->transaksi_id,
-                        'confirmUrl'       => route('transaksi.confirm', $row->transaksi_id),
-                        'status'           => $row->transaksi_status,
-                        'hargaPaket'       => optional($row->paketWisata)->harga ?? 0,
-                        'additionalCharge' => $row->additional_charge ?? 0,
-                    ])->render(),
-                )
+                ->label(fn($row) => view('components.transaksi-action', [
+                    'rowId'            => $row->transaksi_id,
+                    'confirmUrl'       => route('transaksi.confirm', $row->transaksi_id),
+                    'status'           => $row->transaksi_status,
+                    'hargaPaket'       => optional($row->paketWisata)->harga ?? 0,
+                    'additionalCharge' => $row->additional_charge ?? 0,
+                ])->render())
                 ->html(),
 
             Column::make('Transaksi ID', 'transaksi_id')->sortable(),
@@ -63,36 +60,12 @@ class TransaksiTable extends DataTableComponent
             Column::make('Owe to Me', 'owe_to_me')->sortable(),
 
             Column::make('Status Owe', 'owe_to_me_status')
-                ->format(function ($value, $row) {
-                    // Cek apakah field owe_to_me ada isinya (lebih dari 0)
-                    if ($row->owe_to_me > 0) {
-                        return view('components.select-action', [
-                            'rowId'  => $row->transaksi_id,
-                            'field'  => 'owe_to_me_status',
-                            'current'=> $row->owe_to_me_status,
-                        ]);
-                    } else {
-                        return '-'; // Kalau kosong atau nol, tampilkan strip
-                    }
-                })
-                ->html(),
+                ->format(fn($v) => $v ?? '-'),
 
             Column::make('Pay to Provider', 'pay_to_provider')->sortable(),
 
             Column::make('Status Pay To Provider', 'pay_to_provider_status')
-                ->format(function ($value, $row) {
-                    // Cek apakah field pay_to_provider ada isinya (lebih dari 0)
-                    if ($row->pay_to_provider > 0) {
-                        return view('components.select-action', [
-                            'rowId'  => $row->transaksi_id,
-                            'field'  => 'pay_to_provider_status',
-                            'current'=> $row->pay_to_provider_status,
-                        ]);
-                    } else {
-                        return '-'; // Kalau kosong atau nol, tampilkan strip
-                    }
-                })
-                ->html(),
+                ->format(fn($v) => $v ?? '-'),
 
             Column::make('Additional Charge', 'additional_charge')->sortable(),
 
@@ -100,31 +73,5 @@ class TransaksiTable extends DataTableComponent
 
             Column::make('Transaksi Status', 'transaksi_status')->sortable(),
         ];
-    }
-
-    /**
-     * Update one of the two status fields
-     *
-     * @param int    $id
-     * @param string $field  either 'owe_to_me_status' or 'pay_to_provider_status'
-     * @param string $value  'unpaid' or 'paid'
-     */
-    public function updateStatus(int $id, string $field, string $value)
-    {
-        if (!in_array($field, ['owe_to_me_status', 'pay_to_provider_status'])) {
-            return;
-        }
-
-        $trx = Transaksi::find($id);
-        if (!$trx) {
-            return;
-        }
-
-        $trx->update([$field => $value]);
-
-        // refresh DataTable
-        $this->dispatch('refreshDatatable');
-
-        session()->flash('message', ucfirst(str_replace('_', ' ', $field)) . " updated to {$value}");
     }
 }
