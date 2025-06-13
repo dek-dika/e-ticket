@@ -58,7 +58,6 @@ class SopirTable extends DataTableComponent
             ->where('sopir_id', $sopirId)
             ->where('tanggal_keberangkatan', $tanggal)
             ->firstOrFail();
-
         $pdf = Pdf::loadView('pdf.ticket-on-sopir', ['ketersediaan'=>$k]);
 
         return response()->streamDownload(
