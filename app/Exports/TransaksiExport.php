@@ -49,9 +49,10 @@ class TransaksiExport implements FromCollection, WithMapping, WithHeadings, Shou
             'Balance',
             'Payment Type',
             'Provider to Paid',
+            'Status Provider to Paid', // TAMBAHAN
             'Remark',
             'Owes to Agent',
-            'Remark',
+            'Status Owes to Agent', // TAMBAHAN
             'Commission',
         ];
     }
@@ -80,9 +81,10 @@ class TransaksiExport implements FromCollection, WithMapping, WithHeadings, Shou
             $balanceKalkulasi,
             $t->jenis_transaksi ?? '-',
             $t->pay_to_provider ?? 0,
+            $t->pay_to_provider_status ?? '-', // TAMBAHAN
             $t->remark ?? '-',
             $t->owe_to_me ?? 0,
-            $t->remark ?? '-',
+            $t->owe_to_me_status ?? '-',       // TAMBAHAN
             null, // Commission (diisi rumus Excel di AfterSheet)
         ];
     }
@@ -95,25 +97,25 @@ class TransaksiExport implements FromCollection, WithMapping, WithHeadings, Shou
                 $highestRow = $sheet->getHighestDataRow();
                 $totalRow   = $highestRow + 1;
 
-                // 1. Isi rumus Komisi di kolom R:
-                //    Komisi = Deposit (K) - ProviderPaid (N) + OwesToAgent (P)
+                // 1. Isi rumus Komisi di kolom S (sekarang kolom ke-19)
+                //    Komisi = Deposit (K) - ProviderPaid (N) + OwesToAgent (Q)
                 for ($row = 2; $row <= $highestRow; $row++) {
-                    $sheet->setCellValue("R{$row}", "=IFERROR(K{$row}-N{$row}+P{$row},0)");
+                    $sheet->setCellValue("S{$row}", "=IFERROR(K{$row}-N{$row}+Q{$row},0)");
                 }
 
                 // 2. Baris TOTAL untuk beberapa kolom:
                 //    Total Amount (I), Additional Charge (J), Deposit (K), Balance (L),
-                //    Provider to Paid (N), Owes to Agent (P), Commission (R)
+                //    Provider to Paid (N), Owes to Agent (Q), Commission (S)
                 $sheet->setCellValue("H{$totalRow}", 'TOTAL');
                 $sheet->setCellValue("I{$totalRow}", "=SUM(I2:I{$highestRow})");
                 $sheet->setCellValue("J{$totalRow}", "=SUM(J2:J{$highestRow})");
                 $sheet->setCellValue("K{$totalRow}", "=SUM(K2:K{$highestRow})");
                 $sheet->setCellValue("L{$totalRow}", "=SUM(L2:L{$highestRow})");
                 $sheet->setCellValue("N{$totalRow}", "=SUM(N2:N{$highestRow})");
-                $sheet->setCellValue("P{$totalRow}", "=SUM(P2:P{$highestRow})");
-                $sheet->setCellValue("R{$totalRow}", "=SUM(R2:R{$highestRow})");
+                $sheet->setCellValue("Q{$totalRow}", "=SUM(Q2:Q{$highestRow})");
+                $sheet->setCellValue("S{$totalRow}", "=SUM(S2:S{$highestRow})");
 
-                $sheet->getStyle("H{$totalRow}:R{$totalRow}")->applyFromArray([
+                $sheet->getStyle("H{$totalRow}:S{$totalRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
                     'borders' => [
@@ -122,7 +124,7 @@ class TransaksiExport implements FromCollection, WithMapping, WithHeadings, Shou
                 ]);
 
                 // 3. Styling header (baris 1)
-                $sheet->getStyle("A1:R1")->applyFromArray([
+                $sheet->getStyle("A1:S1")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -139,8 +141,8 @@ class TransaksiExport implements FromCollection, WithMapping, WithHeadings, Shou
 
                 // 4. Format mata uang untuk kolom nominal:
                 //    I (Total Amount), J (Additional), K (Deposit), L (Balance),
-                //    N (Provider to Paid), P (Owes to Agent), R (Commission)
-                $currencyCols = ['I', 'J', 'K', 'L', 'N', 'P', 'R'];
+                //    N (Provider to Paid), Q (Owes to Agent), S (Commission)
+                $currencyCols = ['I', 'J', 'K', 'L', 'N', 'Q', 'S'];
                 foreach ($currencyCols as $col) {
                     $sheet->getStyle("{$col}2:{$col}{$totalRow}")
                           ->getNumberFormat()
@@ -148,7 +150,7 @@ class TransaksiExport implements FromCollection, WithMapping, WithHeadings, Shou
                 }
 
                 // 5. Full border semua isi data (baris 2 s/d TOTAL)
-                $sheet->getStyle("A2:R{$totalRow}")->applyFromArray([
+                $sheet->getStyle("A2:S{$totalRow}")->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
