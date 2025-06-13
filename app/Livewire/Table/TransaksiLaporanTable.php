@@ -14,6 +14,10 @@ class TransaksiLaporanTable extends DataTableComponent
 {
     protected $model = Transaksi::class;
 
+    protected $listeners = [
+        'refreshTable' => '$refresh',
+    ];
+
     public function configure(): void
     {
         $this->setPrimaryKey('transaksi_id');
@@ -58,23 +62,33 @@ class TransaksiLaporanTable extends DataTableComponent
 
             Column::make("Owe to Me", "owe_to_me")
                 ->sortable()
-                ->format(function ($v, $row) {
-                    if ($row->owe_to_me > 0) {
-                        return 'Rp ' . number_format($row->owe_to_me, 0, ',', '.');
-                    } else {
-                        return '-';
-                    }
-                }),
+                ->format(fn($v, $row) => $row->owe_to_me > 0 ? 'Rp ' . number_format($row->owe_to_me, 0, ',', '.') : '-'),
+
+            Column::make("Status Owe", "owe_to_me_status")
+                ->format(function ($value, $row) {
+                    return $row->owe_to_me > 0
+                        ? view('components.select-action', [
+                            'rowId'   => $row->transaksi_id,
+                            'field'   => 'owe_to_me_status',
+                            'current' => $row->owe_to_me_status,
+                        ])
+                        : '-';
+                })->html(),
 
             Column::make("Pay to Provider", "pay_to_provider")
                 ->sortable()
-                ->format(function ($v, $row) {
-                    if ($row->pay_to_provider > 0) {
-                        return 'Rp ' . number_format($row->pay_to_provider, 0, ',', '.');
-                    } else {
-                        return '-';
-                    }
-                }),
+                ->format(fn($v, $row) => $row->pay_to_provider > 0 ? 'Rp ' . number_format($row->pay_to_provider, 0, ',', '.') : '-'),
+
+            Column::make("Status Pay To Provider", "pay_to_provider_status")
+                ->format(function ($value, $row) {
+                    return $row->pay_to_provider > 0
+                        ? view('components.select-action', [
+                            'rowId'   => $row->transaksi_id,
+                            'field'   => 'pay_to_provider_status',
+                            'current' => $row->pay_to_provider_status,
+                        ])
+                        : '-';
+                })->html(),
 
             Column::make("Total Transaksi", "total_transaksi")
                 ->sortable()
@@ -93,13 +107,10 @@ class TransaksiLaporanTable extends DataTableComponent
     {
         return [
             FiltersDateFilter::make('Dari')
-                ->filter(function(Builder $query, string $value) {
-                    $query->whereDate('created_at', '>=', $value);
-                }),
+                ->filter(fn(Builder $query, string $value) => $query->whereDate('created_at', '>=', $value)),
+
             FiltersDateFilter::make('Sampai')
-                ->filter(function(Builder $query, string $value) {
-                    $query->whereDate('created_at', '<=', $value);
-                }),
+                ->filter(fn(Builder $query, string $value) => $query->whereDate('created_at', '<=', $value)),
         ];
     }
 
@@ -120,5 +131,19 @@ class TransaksiLaporanTable extends DataTableComponent
         );
 
         $this->clearSelected();
+    }
+
+    public function updateStatus(int $id, string $field, string $value)
+    {
+        if (!in_array($field, ['owe_to_me_status', 'pay_to_provider_status'])) {
+            return;
+        }
+
+        $trx = Transaksi::find($id);
+        if (!$trx) return;
+
+        $trx->update([$field => $value]);
+        $this->dispatch('refreshTable');
+        session()->flash('message', ucfirst(str_replace('_', ' ', $field)) . " updated to {$value}");
     }
 }
