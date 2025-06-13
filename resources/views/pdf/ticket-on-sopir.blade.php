@@ -183,7 +183,7 @@
                 <td>
                     Name:
                     <span class="field w-350">
-                        {{ $sopir->nama_sopir ?? '-' }}
+                        {{ $transaksi->pemesanan->pelanggan->nama_pemesan ?? ('-' ?? '-') }}
                     </span>
                 </td>
                 <td>
